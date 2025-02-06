@@ -4,7 +4,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { router, Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SnackbarProvider } from "@/context/SnackbarContext";
 import { AuthService } from "@/services/AuthService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,13 +26,18 @@ export default function RootLayout() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const pathname = usePathname();
+
+  const checkLoginStatus = async () => {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    }
+  };
+
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      const token = await AuthService.getToken();
-      setIsLoggedIn(!!token);
-    };
     checkLoginStatus();
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (loaded) {
@@ -46,12 +52,20 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SnackbarProvider>
-        <Stack>
-          <Stack.Screen name="landing" options={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
           {isLoggedIn && (
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           )}
           <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="report" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="registerReport"
+            options={{ title: "Register a New Report", headerShown: true }}
+          />
+          <Stack.Screen
+            name="reportHistory"
+            options={{ title: "Report History", headerShown: true }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

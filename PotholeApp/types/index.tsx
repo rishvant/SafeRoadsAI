@@ -1,6 +1,9 @@
 export type RootStackParamList = {
   home: undefined;
   login: undefined;
+  report: undefined;
+  registerReport: undefined;
+  reportHistory: undefined;
 };
 
 // Define a type for the icon names

@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { AuthService } from "@/services/AuthService";
 import { useSnackbar } from "@/context/SnackbarContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -32,6 +33,11 @@ export default function LoginScreen() {
     try {
       const response = await AuthService.login(form);
       console.log(response.data);
+
+      const token = response.data.token; // Ensure the API returns `token`
+
+      // Save token in AsyncStorage
+      await AsyncStorage.setItem("token", token);
 
       showSnackbar("Logged in successfully!", "success");
       setForm({ email: "", password: "" });

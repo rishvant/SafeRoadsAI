@@ -1,54 +1,38 @@
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
-import { Ionicons } from "@expo/vector-icons"; // Import icons
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { IconName, RootStackParamList } from "@/types";
-import "react-native-get-random-values";
+import { RootStackParamList, IconName } from "@/types";
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "home">;
+type ReportScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "report"
+>;
 
-export default function HomeScreen() {
-  const navigation = useNavigation<HomeScreenNavigationProp>();
+export default function ReportScreen() {
+  const navigation = useNavigation<ReportScreenNavigationProp>();
 
-  const features: {
+  const options: {
     title: string;
     description: string;
     icon: IconName;
     onPress: () => void;
   }[] = [
     {
-      title: "Community",
-      description: "Join the community to report potholes.",
-      icon: "people-outline" as IconName,
-      onPress: () => {},
-    },
-    {
-      title: "Nearby Potholes",
-      description: "View potholes near your location.",
-      icon: "location-outline" as IconName,
-      onPress: () => {},
-    },
-    {
-      title: "Report Pothole",
-      description: "Upload a new pothole location.",
-      icon: "camera-outline" as IconName,
+      title: "Report Status",
+      description: "Check the status of your reported potholes.",
+      icon: "document-text-outline" as IconName,
       onPress: () => {
-        navigation.navigate("report")
+        navigation.navigate("reportHistory");
       },
     },
     {
-      title: "Statistics",
-      description: "View reported pothole data.",
-      icon: "bar-chart-outline" as IconName,
-      onPress: () => {},
-    },
-    {
-      title: "Login",
-      description: "Access your account.",
-      icon: "log-in-outline" as IconName,
+      title: "Register Report",
+      description: "Submit a new pothole report.",
+      icon: "create-outline" as IconName,
       onPress: () => {
-        navigation.navigate("login");
+        navigation.navigate("registerReport");
       },
     },
   ];
@@ -58,25 +42,25 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <ThemedText type="title" style={styles.headerText}>
-          🚧 Pothole Tracker
+          📝 Report Pothole
         </ThemedText>
       </View>
 
       {/* Cards Container */}
       <View style={styles.cardContainer}>
-        {features.map((feature, index) => (
+        {options.map((option, index) => (
           <TouchableOpacity
             key={index}
             style={styles.card}
             activeOpacity={0.8}
-            onPress={feature.onPress}
+            onPress={option.onPress}
           >
-            <Ionicons name={feature.icon} size={32} color="#2D8CFF" />
+            <Ionicons name={option.icon} size={32} color="#2D8CFF" />
             <ThemedText type="title" style={styles.cardTitle}>
-              {feature.title}
+              {option.title}
             </ThemedText>
             <ThemedText style={styles.cardDesc}>
-              {feature.description}
+              {option.description}
             </ThemedText>
           </TouchableOpacity>
         ))}
@@ -114,7 +98,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   card: {
-    width: "45%", // Two cards per row
+    width: "90%",
     height: 140,
     padding: 16,
     marginVertical: 10,
