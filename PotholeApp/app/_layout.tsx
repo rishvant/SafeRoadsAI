@@ -66,6 +66,14 @@ export default function RootLayout() {
             name="reportHistory"
             options={{ title: "Report History", headerShown: true }}
           />
+          <Stack.Screen
+            name="nearbyPotholes"
+            options={{ title: "Nearby Potholes", headerShown: true }}
+          />
+          <Stack.Screen
+            name="realtimeDetection"
+            options={{ title: "Realtime Detection", headerShown: true }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

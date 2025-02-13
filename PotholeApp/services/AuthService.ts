@@ -11,6 +11,8 @@ export const AuthService = {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
     if (response.status === 200) {
       await SecureStore.setItemAsync("token", response.data?.token);
+      const userId = response.data?.user?._id;
+      await SecureStore.setItemAsync("user_id", String(userId));
     }
     return response;
   },
@@ -19,5 +21,11 @@ export const AuthService = {
   },
   clearToken: async () => {
     await SecureStore.deleteItemAsync("token");
+  },
+  getUserId: async () => {
+    return await SecureStore.getItemAsync("user_id");
+  },
+  clearUserId: async () => {
+    await SecureStore.deleteItemAsync("user_id");
   },
 };

@@ -10,10 +10,14 @@ import {
   Modal,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import { FontAwesome } from "@expo/vector-icons"; // For info icon
+import { FontAwesome } from "@expo/vector-icons";
+import { ReportService } from "@/services/ReportService";
+import { AuthService } from "@/services/AuthService";
+import { STATIC_FILES_URL } from "@/services/Api";
+import * as Location from "expo-location";
 
 interface Report {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   photo?: string | null;
@@ -22,49 +26,54 @@ interface Report {
     longitude: number;
   };
   status: "Approved" | "Pending";
+  detections?: {
+    damage_type: string;
+    confidence_score: number;
+    _id: string;
+  }[];
 }
-
-// Dummy Reports Data (Replace with API Call)
-const dummyReports: Report[] = [
-  {
-    id: "1",
-    name: "Pothole on Street",
-    description: "Large pothole causing traffic issues.",
-    photo:
-      "https://upload.wikimedia.org/wikipedia/commons/3/3a/Pothole_in_a_road.jpg",
-    location: { latitude: 37.7749, longitude: -122.4194 },
-    status: "Pending",
-  },
-  {
-    id: "2",
-    name: "Broken Streetlight",
-    description: "Streetlight near park is not working.",
-    photo: null,
-    location: { latitude: 37.7755, longitude: -122.4195 },
-    status: "Approved",
-  },
-  {
-    id: "3",
-    name: "Garbage Dump",
-    description: "Uncollected garbage on main road.",
-    photo:
-      "https://upload.wikimedia.org/wikipedia/commons/9/98/Garbage_Dump.jpg",
-    location: { latitude: 37.776, longitude: -122.4196 },
-    status: "Pending",
-  },
-];
 
 export default function ReportStatusScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simulate fetching reports
   useEffect(() => {
-    setTimeout(() => {
-      setReports(dummyReports);
-      setLoading(false);
-    }, 1500);
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const userId = await AuthService.getUserId();
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+        const response = await ReportService.getReportsByUserId(userId);
+        const sortedReports = response.data.sort(
+          (a: { createdAt: string }, b: { createdAt: string }) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        console.log(sortedReports);
+        setReports(sortedReports);
+      } catch (err) {
+        console.log(err);
+        setError("Failed to fetch reports. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setError("Permission to access location was denied");
+        return;
+      }
+    })();
   }, []);
 
   if (loading) {
@@ -72,6 +81,14 @@ export default function ReportStatusScreen() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="blue" />
         <Text>Fetching Reports...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
@@ -85,47 +102,76 @@ export default function ReportStatusScreen() {
       ) : (
         <FlatList
           data={reports}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
-            <View style={styles.reportCard}>
+            <View key={item._id} style={styles.reportCard}>
               <View style={styles.reportHeader}>
-                <Text style={styles.reportTitle}>{item.name}</Text>
+                <Text style={styles.reportTitle}>Name: {item.name}</Text>
                 <TouchableOpacity onPress={() => setSelectedReport(item)}>
                   <FontAwesome name="info-circle" size={22} color="blue" />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.reportDescription}>{item.description}</Text>
-              <Text
-                style={[
-                  styles.reportStatus,
-                  { color: item.status === "Approved" ? "green" : "red" },
-                ]}
-              >
-                Status: {item.status}
+              <Text style={styles.reportDescription}>
+                Description: {item.description}
               </Text>
 
-              {/* Mini Map for Each Report */}
+              <Text style={styles.detectionStatus}>
+                Detection:{" "}
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    color: (item.detections?.length ?? 0) > 0 ? "green" : "red",
+                  }}
+                >
+                  {(item.detections?.length ?? 0) > 0
+                    ? "Detected"
+                    : "Not Detected"}
+                </Text>
+              </Text>
+
+              {item.detections && item.detections.length > 0 && (
+                <View style={styles.detectionsContainer}>
+                  <Text style={styles.detectionsHeader}>Detections:</Text>
+                  {item.detections.map((detection) => (
+                    <Text key={detection._id} style={styles.detectionText}>
+                      • {detection.damage_type} (Confidence:{" "}
+                      {(detection.confidence_score * 100).toFixed(2)}%)
+                    </Text>
+                  ))}
+                </View>
+              )}
+
               <MapView
                 style={styles.miniMap}
                 initialRegion={{
-                  latitude: item.location.latitude,
-                  longitude: item.location.longitude,
+                  latitude: item.location?.latitude ?? 0, // Default to 0 if undefined
+                  longitude: item.location?.longitude ?? 0,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                }}
+                region={{
+                  latitude: item.location?.latitude ?? 0, // Default to 0 if undefined
+                  longitude: item.location?.longitude ?? 0,
                   latitudeDelta: 0.005,
                   longitudeDelta: 0.005,
                 }}
               >
-                <Marker
-                  coordinate={item.location}
-                  title={item.name}
-                  pinColor="red"
-                />
+                {item.location?.latitude && item.location?.longitude && (
+                  <Marker
+                    coordinate={{
+                      latitude: item.location.latitude,
+                      longitude: item.location.longitude,
+                    }}
+                    title={item.name}
+                    pinColor="red"
+                  />
+                )}
               </MapView>
             </View>
           )}
         />
       )}
 
-      {/* Report Details Modal */}
       <Modal
         visible={!!selectedReport}
         transparent
@@ -138,20 +184,40 @@ export default function ReportStatusScreen() {
             <Text style={styles.modalDescription}>
               {selectedReport?.description}
             </Text>
-            <Text style={styles.modalStatus}>
-              Status:{" "}
+            <Text style={styles.detectionStatus}>
+              Detection:{" "}
               <Text
                 style={{
+                  fontWeight: "bold",
                   color:
-                    selectedReport?.status === "Approved" ? "green" : "red",
+                    (selectedReport?.detections?.length ?? 0) > 0
+                      ? "green"
+                      : "red",
                 }}
               >
-                {selectedReport?.status}
+                {(selectedReport?.detections?.length ?? 0) > 0
+                  ? "Detected"
+                  : "Not Detected"}
               </Text>
             </Text>
+
+            {selectedReport?.detections &&
+              selectedReport?.detections.length > 0 && (
+                <View style={styles.detectionsContainer}>
+                  <Text style={styles.detectionsHeader}>Detections:</Text>
+                  {selectedReport?.detections.map((detection) => (
+                    <Text key={detection._id} style={styles.detectionText}>
+                      • {detection.damage_type} (Confidence:{" "}
+                      {(detection.confidence_score * 100).toFixed(2)}%)
+                    </Text>
+                  ))}
+                </View>
+              )}
             {selectedReport?.photo && (
               <Image
-                source={{ uri: selectedReport.photo }}
+                source={{
+                  uri: `${STATIC_FILES_URL}${selectedReport.photo}`,
+                }}
                 style={styles.modalImage}
               />
             )}
@@ -196,8 +262,8 @@ const styles = StyleSheet.create({
   reportTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
   reportDescription: { fontSize: 14, color: "#555", marginTop: 5 },
   reportStatus: { fontSize: 14, fontWeight: "bold", marginTop: 5 },
+  detectionStatus: { fontSize: 14, fontWeight: "bold", marginTop: 5 },
 
-  // Mini Map
   miniMap: {
     width: "100%",
     height: 150,
@@ -211,7 +277,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Modal Styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
+  },
+  detectionsContainer: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+  },
+  detectionsHeader: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  detectionText: {
+    fontSize: 12,
+    color: "#555",
+    marginLeft: 5,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",

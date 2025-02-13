@@ -14,10 +14,11 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { launchImageLibrary } from "react-native-image-picker";
-import { v4 as uuidv4 } from "uuid";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import * as ImagePicker from "expo-image-picker";
+import { ReportService } from "@/services/ReportService";
+import { AuthService } from "@/services/AuthService";
+import { useRouter } from "expo-router";
 
 export default function RegisterReportScreen() {
   const [name, setName] = useState("");
@@ -37,7 +38,8 @@ export default function RegisterReportScreen() {
 
   const [loading, setLoading] = useState(true);
   const [buttonLoading, setButtonLoading] = useState(false);
-
+  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
   // Fetch User's Current Location Initially
   useEffect(() => {
     (async () => {
@@ -105,25 +107,68 @@ export default function RegisterReportScreen() {
   };
 
   // Save Report
-  const saveReport = () => {
-    if (!name || !description || !marker) {
+  const saveReport = async () => {
+    if (!name || !description) {
       Alert.alert("Error", "All fields are required!");
       return;
     }
 
-    const reportData = {
-      id: uuidv4(),
-      name,
-      description,
-      photo,
-      location: {
-        latitude: marker.latitude,
-        longitude: marker.longitude,
-      },
-    };
+    if (!marker || !marker.latitude || !marker.longitude) {
+      Alert.alert(
+        "Location Required",
+        "Please fetch your location before submitting.",
+        [{ text: "OK", onPress: moveToCurrentLocation }]
+      );
+      return;
+    }
 
-    console.log("Report Saved:", reportData);
-    Alert.alert("Success", "Report has been registered!");
+    setSubmitting(true);
+
+    const userId = (await AuthService.getUserId()) ?? "";
+
+    try {
+      const formData = new FormData();
+
+      // Append text data
+      formData.append("user_id", userId);
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("latitude", `${marker.latitude}`);
+      formData.append("longitude", `${marker.longitude}`);
+
+      // Append photo if available
+      if (photo) {
+        const filename = photo.split("/").pop();
+        const match = /\.(\w+)$/.exec(filename!);
+        const type = match ? `image/${match[1]}` : "image/jpeg"; // Default to jpeg
+
+        formData.append("photo", {
+          uri: photo,
+          name: filename,
+          type,
+        } as any);
+      } else {
+        formData.append("photo", "");
+      }
+
+      await ReportService.registerReport(formData);
+
+      Alert.alert("Success", "Report has been registered!", [
+        { text: "OK", onPress: () => router.push("/report") },
+      ]);
+      setName("");
+      setDescription("");
+      setPhoto(null);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("API Error:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
+      Alert.alert("Error", "Failed to submit the report.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -149,7 +194,6 @@ export default function RegisterReportScreen() {
             onChangeText={setName}
             placeholder="Enter Name"
           />
-
           <Text style={styles.label}>Description:</Text>
           <TextInput
             style={styles.input}
@@ -158,7 +202,6 @@ export default function RegisterReportScreen() {
             placeholder="Enter Description"
             multiline
           />
-
           <Text style={styles.label}>Search Location:</Text>
           <GooglePlacesAutocomplete
             placeholder="Search for a location"
@@ -194,7 +237,6 @@ export default function RegisterReportScreen() {
               },
             }}
           />
-
           <Text style={styles.label}>Select Location:</Text>
           {region && (
             <MapView
@@ -205,7 +247,6 @@ export default function RegisterReportScreen() {
               {marker && <Marker coordinate={marker} />}
             </MapView>
           )}
-
           <View style={styles.buttonContainer}>
             {buttonLoading ? (
               <ActivityIndicator size="small" color="blue" />
@@ -216,14 +257,16 @@ export default function RegisterReportScreen() {
               />
             )}
           </View>
-
           <Text style={styles.label}>Photo:</Text>
           <View style={styles.imageContainer}>
             {photo && <Image source={{ uri: photo }} style={styles.image} />}
           </View>
           <Button title="Pick an Image" onPress={pickImage} />
-
-          <Button title="Submit Report" onPress={saveReport} color="green" />
+          {submitting ? (
+            <ActivityIndicator size="small" color="green" />
+          ) : (
+            <Button title="Submit Report" onPress={saveReport} color="green" />
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

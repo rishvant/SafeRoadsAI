@@ -4,6 +4,8 @@ export type RootStackParamList = {
   report: undefined;
   registerReport: undefined;
   reportHistory: undefined;
+  nearbyPotholes: undefined;
+  realtimeDetection: undefined;
 };
 
 // Define a type for the icon names
