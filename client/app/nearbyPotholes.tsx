@@ -152,7 +152,7 @@ const NearbyPotholesScreen = () => {
               </Text>
               <Image
                 source={{
-                  uri: `https://yourserver.com${selectedPothole.photo}`,
+                  uri: `${API_BASE_URL}/${selectedPothole.photo}`,
                 }}
                 style={styles.tipImage}
               />

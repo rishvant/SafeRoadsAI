@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import { ReportService } from "@/services/ReportService";
 import { AuthService } from "@/services/AuthService";
 import { useRouter } from "expo-router";
+import { GOOGLE_MAPS_API_KEY } from "@/services/Api";
 
 export default function RegisterReportScreen() {
   const [name, setName] = useState("");
@@ -219,7 +220,7 @@ export default function RegisterReportScreen() {
             }}
             fetchDetails
             query={{
-              key: "AIzaSyCz2p8RsQqGdQIBXawViYFj697w_89YzZ4",
+              key: GOOGLE_MAPS_API_KEY,
               language: "en",
             }}
             styles={{
