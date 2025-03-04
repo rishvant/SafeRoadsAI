@@ -130,8 +130,6 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  console.log(nearestPothole);
-
   const getNearestPothole = (
     userLocation: { lat: number; lon: number },
     potholes: { latitude: number; longitude: number }[]
@@ -166,8 +164,6 @@ export default function HomeScreen() {
       setNearestPothole(nearest);
     }
   }, [potholes, userLocation]);
-
-  console.log(nearestPothole);
 
   return (
     <View style={styles.container}>
