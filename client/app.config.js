@@ -42,6 +42,7 @@ export default {
     extra: {
       apiUrl: process.env.API_BASE_URL,
       staticFilesUrl: process.env.STATIC_FILES_URL,
+      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
     }
   }
 }
