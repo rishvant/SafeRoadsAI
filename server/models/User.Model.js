@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    avatar: {
+        type: String
+    }
 },
     {
         timestamps: true
@@ -30,7 +33,7 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id }, 'your_jwt_secret');
+    const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
     return token;
 };
 

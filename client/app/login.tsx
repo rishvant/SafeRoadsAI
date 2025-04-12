@@ -32,12 +32,13 @@ export default function LoginScreen() {
 
     try {
       const response = await AuthService.login(form);
-      console.log(response.data);
 
-      const token = response.data.token; // Ensure the API returns `token`
+      const token = response.data.token;
+      const user = response.data.user;
 
       // Save token in AsyncStorage
       await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
 
       showSnackbar("Logged in successfully!", "success");
       setForm({ email: "", password: "" });
