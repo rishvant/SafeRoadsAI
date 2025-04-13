@@ -10,13 +10,19 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { AuthService } from "@/services/AuthService";
 
 export default function ProfileScreen() {
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<{
+    name: string;
+    email: string;
+    avatar?: string;
+  }>({
     name: "",
     email: "",
-    phone: "",
+    avatar: "",
   });
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,10 +48,52 @@ export default function ProfileScreen() {
   // Save updated profile
   const saveProfile = async () => {
     try {
-      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      const token = await AuthService.getToken();
+
+      if (!token) {
+        console.error("No token found!");
+        return;
+      }
+
+      const response = await AuthService.updateProfile(
+        {
+          name: userData.name,
+          avatar: userData.avatar || "",
+        },
+        token
+      );
+
+      console.log(response.data);
+
+      const updatedUser = response.data.user;
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+
       setIsEditing(false);
     } catch (error) {
       console.log("Error saving profile:", error);
+    }
+  };
+
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access gallery is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedImageUri = result.assets[0].uri;
+      setUserData({ ...userData, avatar: selectedImageUri });
     }
   };
 
@@ -56,23 +104,25 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       {/* Profile Image */}
-      {/* <View style={styles.profileImageContainer}>
+      <View style={styles.profileImageContainer}>
         <Image
           source={{
-            uri: "https://randomuser.me/api/portraits/men/75.jpg",
+            uri: userData?.avatar || "https://example.com/default-avatar.png",
           }}
           style={styles.profileImage}
         />
-        <TouchableOpacity style={styles.editIcon}>
-          <Feather name="edit-2" size={18} color="white" />
-        </TouchableOpacity>
-      </View> */}
+        {isEditing && (
+          <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
+            <Feather name="edit-2" size={18} color="white" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      <MaterialCommunityIcons
+      {/* <MaterialCommunityIcons
         name="account-circle"
         size={100}
         color="#2D8CFF"
-      />
+      /> */}
 
       {/* Profile Details Card */}
       <View style={styles.card}>
@@ -96,21 +146,6 @@ export default function ProfileScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Email</Text>
           <Text style={styles.text}>{userData.email || "N/A"}</Text>
-        </View>
-
-        {/* Phone */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Phone</Text>
-          {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={userData.phone}
-              onChangeText={(text) => setUserData({ ...userData, phone: text })}
-              keyboardType="phone-pad"
-            />
-          ) : (
-            <Text style={styles.text}>{userData.phone || "N/A"}</Text>
-          )}
         </View>
 
         {/* Edit & Save Button */}

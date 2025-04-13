@@ -16,6 +16,15 @@ export const AuthService = {
     }
     return response;
   },
+  updateProfile: async (
+    data: { name: string; avatar: string },
+    token: string
+  ) => {
+    const response = await axios.put(`${API_BASE_URL}/auth/update`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response;
+  },
   getToken: async () => {
     return await SecureStore.getItemAsync("token");
   },
