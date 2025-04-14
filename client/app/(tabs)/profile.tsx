@@ -63,8 +63,6 @@ export default function ProfileScreen() {
         token
       );
 
-      console.log(response.data);
-
       const updatedUser = response.data.user;
       await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
       setUserData(updatedUser);
