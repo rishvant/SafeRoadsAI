@@ -8,8 +8,8 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { AuthService } from "@/services/AuthService"; // Adjust this path if necessary
-import { useSnackbar } from "@/context/SnackbarContext"; // Adjust this path if necessary
+import { AuthService } from "@/services/AuthService";
+import { useSnackbar } from "@/context/SnackbarContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function SignUpScreen() {
@@ -30,13 +30,11 @@ export default function SignUpScreen() {
     }
 
     try {
-      const response = await AuthService.signup(form);
-      console.log(response.data);
+      await AuthService.signup(form);
       Alert.alert("Success", "Signed up successfully!");
       setForm({ name: "", email: "", password: "" });
-      router.push("/"); // Navigate to Home or another page
+      router.push("/");
     } catch (error: any) {
-      console.log(error);
       const errorMessage =
         error.response?.data?.error || error.message || "Signup failed";
       Alert.alert("Signup Failed", errorMessage);
