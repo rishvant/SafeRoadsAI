@@ -15,7 +15,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 export default function SignUpScreen() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
