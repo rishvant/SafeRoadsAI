@@ -1,6 +1,6 @@
-# RoadGuard - AI-Powered Pothole Detection & Reporting Platform
+# SafeRoadsAI - AI-Powered Pothole Detection & Reporting Platform
 
-**RoadGuard** is an intelligent pothole detection and reporting platform that leverages AI to identify potholes from user-submitted images or camera feeds. It enables real-time pothole detection with geolocation tagging and seamless reporting to help municipal authorities maintain safer roads. The system empowers both users and administrators through a responsive interface and scalable backend.
+**SafeRoadsAI** is an intelligent pothole detection and reporting platform that leverages AI to identify potholes from user-submitted images or camera feeds. It enables real-time pothole detection with geolocation tagging and seamless reporting to help municipal authorities maintain safer roads. The system empowers both users and administrators through a responsive interface and scalable backend.
 
 ## Features
 
